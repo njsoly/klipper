@@ -8,9 +8,16 @@
 
 ensure_link () {
 	file=$1
+	_debug=1
 	
+	if [[ _debug ]]; then
+		names=$(stat -c %h -- "$1")
+		printf "Inode \"$1\" has ${names} hard links.\n"
+	fi
+
+
 	# if the given inode ("file") has one name, it is not "linked".
-	if [ "$(stat -c %h -- "$file")" -gt 1 ]; then
+	if [ $(stat -c %h -- "${file}") -gt 1 ]; then
 		printf "File \"${file}\" is not linked.\n"
 	else
 		printf "File \"${file}\" is already linked.\n"
