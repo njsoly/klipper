@@ -13,4 +13,15 @@
     <option name="format" value="PLAIN" />
     <option name="myDocStringFormat" value="Plain" />
   </component>
+  <component name="TemplatesService">
+    <option name="templateFileTypes">
+      <list>
+        <option value="AUTO_DETECTED" />
+        <option value="HTML" />
+        <option value="XHTML" />
+        <option value="XML" />
+      </list>
+    </option>
+    <option name="TEMPLATE_CONFIGURATION" value="Jinja2" />
+  </component>
 </module>
