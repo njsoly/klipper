@@ -14,5 +14,5 @@
     <option name="testRunner" value="GRADLE" />
     <option name="delegatedBuild" value="true" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (klipper)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" project-jdk-name="Python 3.10" project-jdk-type="Python SDK" />
 </project>
