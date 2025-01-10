@@ -979,8 +979,6 @@ the paused state is fresh for each print.
 
 ### [print_stats]
 
-The print_stats module is automatically loaded.
-
 #### SET_PRINT_STATS_INFO
 `SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>] [CURRENT_LAYER=
 <current_layer>]`: Pass slicer info like layer act and total to Klipper.
