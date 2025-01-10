@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/klipper.iml" filepath="$PROJECT_DIR$/.idea/klipper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/klippy/klippy.iml" filepath="$PROJECT_DIR$/klippy/klippy.iml" />
     </modules>
   </component>
 </project>
