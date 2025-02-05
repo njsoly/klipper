@@ -1,1 +1,52 @@
+# Creality Ender 5 S1 (HW version: CR4NS200141C13)
+#
+# printer_size: 220x220x280
+# To use this config, during "make menuconfig" select the STM32F401
+# with a "64KiB bootloader" and serial (on USART1 PA10/PA9)
+# communication.
+#
+# Flash this firmware by creating a directory named "STM32F4_UPDATE"
+# on an SD card, copying the "out/klipper.bin" to it and then turn
+# on the printer with the card inserted. The firmware filename must
+# end in ".bin" and must not match the last filename that was flashed.
+#
+# See docs/Config_Reference.md for a description of parameters.
 
+[include ./klipper/printer.cfg]
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [extruder]
+#*# control = pid
+#*# pid_kp = 23.337
+#*# pid_ki = 1.353
+#*# pid_kd = 100.641
+#*#
+#*# [heater_bed]
+#*# control = pid
+#*# pid_kp = 62.789
+#*# pid_ki = 0.720
+#*# pid_kd = 1368.017
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*# 	  0.090833, 0.092500, 0.093333, 0.093333, 0.065833
+#*# 	  0.014167, 0.010833, 0.013333, 0.006667, -0.015833
+#*# 	  -0.013333, -0.036667, -0.027500, -0.030833, -0.007500
+#*# 	  0.011667, -0.010833, 0.005000, -0.010000, -0.040000
+#*# 	  0.085833, 0.062500, 0.076667, 0.078333, 0.091667
+#*# tension = 0.2
+#*# min_x = 8.0
+#*# algo = lagrange
+#*# y_count = 5
+#*# mesh_y_pps = 3
+#*# min_y = 33.0
+#*# x_count = 5
+#*# max_y = 213.0
+#*# mesh_x_pps = 3
+#*# max_x = 200.0
+#*#
+#*# [bltouch]
+#*# z_offset = 2.411
