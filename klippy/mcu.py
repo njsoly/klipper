@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -31,18 +31,20 @@ class RetryAsyncCommand:
         if self.need_response and params['#sent_time'] >= self.min_query_time:
             self.need_response = False
             self.reactor.async_complete(self.completion, params)
-    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0, retry=True):
         cmd, = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         self.min_query_time = 0.
-        first_query_time = query_time = self.reactor.monotonic()
+        timeout_time = query_time = self.reactor.monotonic()
+        if retry:
+            timeout_time += self.TIMEOUT_TIME
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)
                 return params
             query_time = self.reactor.monotonic()
-            if query_time > first_query_time + self.TIMEOUT_TIME:
+            if query_time > timeout_time:
                 self.serial.register_response(None, self.name, self.oid)
                 raise serialhdl.error("Timeout on wait for '%s' response"
                                       % (self.name,))
@@ -64,19 +66,21 @@ class CommandQueryWrapper:
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
-    def _do_send(self, cmds, minclock, reqclock):
+    def _do_send(self, cmds, minclock, reqclock, retry):
         xh = self._xmit_helper(self._serial, self._response, self._oid)
         reqclock = max(minclock, reqclock)
         try:
-            return xh.get_response(cmds, self._cmd_queue, minclock, reqclock)
+            return xh.get_response(cmds, self._cmd_queue, minclock, reqclock,
+                                   retry)
         except serialhdl.error as e:
             raise self._error(str(e))
-    def send(self, data=(), minclock=0, reqclock=0):
-        return self._do_send([self._cmd.encode(data)], minclock, reqclock)
+    def send(self, data=(), minclock=0, reqclock=0, retry=True):
+        return self._do_send([self._cmd.encode(data)], minclock, reqclock,
+                             retry)
     def send_with_preface(self, preface_cmd, preface_data=(), data=(),
-                          minclock=0, reqclock=0):
+                          minclock=0, reqclock=0, retry=True):
         cmds = [preface_cmd._cmd.encode(preface_data), self._cmd.encode(data)]
-        return self._do_send(cmds, minclock, reqclock)
+        return self._do_send(cmds, minclock, reqclock, retry)
 
 # Wrapper around command sending
 class CommandWrapper:
@@ -545,6 +549,11 @@ class MCU_adc:
 # Main MCU class
 ######################################################################
 
+# Minimum time host needs to get scheduled events queued into mcu
+MIN_SCHEDULE_TIME = 0.100
+# Maximum time all MCUs can internally schedule into the future
+MAX_NOMINAL_DURATION = 3.0
+
 class MCU:
     error = error
     def __init__(self, config, clocksync):
@@ -565,6 +574,7 @@ class MCU:
             self._canbus_iface = config.get('canbus_interface', 'can0')
             cbid = self._printer.load_object(config, 'canbus_ids')
             cbid.add_uuid(config, canbus_uuid, self._canbus_iface)
+            self._printer.load_object(config, 'canbus_stats %s' % (self._name,))
         else:
             self._serialport = config.get('serial')
             if not (self._serialport.startswith("/dev/rpmsg_")
@@ -832,9 +842,10 @@ class MCU:
         systime = self._reactor.monotonic()
         get_clock = self._clocksync.get_clock
         calc_freq = get_clock(systime + 1) - get_clock(systime)
+        freq_diff = abs(mcu_freq - calc_freq)
         mcu_freq_mhz = int(mcu_freq / 1000000. + 0.5)
         calc_freq_mhz = int(calc_freq / 1000000. + 0.5)
-        if mcu_freq_mhz != calc_freq_mhz:
+        if freq_diff > mcu_freq*0.01 and mcu_freq_mhz != calc_freq_mhz:
             pconfig = self._printer.lookup_object('configfile')
             msg = ("MCU '%s' configured for %dMhz but running at %dMhz!"
                     % (self._name, mcu_freq_mhz, calc_freq_mhz))
@@ -866,6 +877,10 @@ class MCU:
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
         return self._max_stepper_error
+    def min_schedule_time(self):
+        return MIN_SCHEDULE_TIME
+    def max_nominal_duration(self):
+        return MAX_NOMINAL_DURATION
     # Wrapper functions
     def get_printer(self):
         return self._printer
