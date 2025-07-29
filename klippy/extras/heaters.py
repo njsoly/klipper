@@ -1,6 +1,6 @@
 # Tracking of PWM controlled heaters and their temperature control
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, threading
@@ -11,10 +11,11 @@ import os, logging, threading
 ######################################################################
 
 KELVIN_TO_CELSIUS = -273.15
-MAX_HEAT_TIME = 5.0
+MAX_HEAT_TIME = 3.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 MAX_MAINTHREAD_TIME = 5.0
+QUELL_STALE_TIME = 7.0
 
 class Heater:
     def __init__(self, config, sensor):
@@ -110,9 +111,10 @@ class Heater:
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):
-        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
+        est_print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime)
+        quell_time = est_print_time - QUELL_STALE_TIME
         with self.lock:
-            if self.last_temp_time < print_time:
+            if self.last_temp_time < quell_time:
                 return 0., self.target_temp
             return self.smoothed_temp, self.target_temp
     def check_busy(self, eventtime):
